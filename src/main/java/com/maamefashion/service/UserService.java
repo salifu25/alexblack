@@ -39,7 +39,7 @@ public class UserService implements UserDetailsService {
                     .email("designer@maame.com")
                     .password("$2a$12$9KrCnUW4JYNAz27nXYn7de7tSfE4iSaSBrVLGBj.EI5ovIZY0/7wC") // admin123
                     .name("Maame Designer")//
-                    .role(User.Role.ADMIN)
+                    .role(User.Role.ADMIN) //test
                     .build();
             userRepository.save(admin);
         }
