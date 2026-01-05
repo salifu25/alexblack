@@ -18,6 +18,7 @@ public class PublicPieceDTO {
     private String image;
     private String price;
     private Boolean available;
+    private Boolean showPrice;
     private CollectionPiece.Category category;
 
     public String getId() {

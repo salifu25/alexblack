@@ -3,8 +3,10 @@ package com.maamefashion.service;
 import com.maamefashion.dto.CollectionDTO;
 import com.maamefashion.dto.PublicCollectionDTO;
 import com.maamefashion.dto.PublicPieceDTO;
+import com.maamefashion.model.Category;
 import com.maamefashion.model.Collection;
 import com.maamefashion.model.CollectionPiece;
+import com.maamefashion.repository.CategoryRepository;
 import com.maamefashion.repository.CollectionPieceRepository;
 import com.maamefashion.repository.CollectionRepository;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +22,7 @@ public class CollectionService {
 
     private final CollectionRepository collectionRepository;
     private final CollectionPieceRepository pieceRepository;
+    private final CategoryRepository categoryRepository;
 
     @Transactional(readOnly = true)
     public List<PublicCollectionDTO> getPublicCollections() {
@@ -46,12 +49,20 @@ public class CollectionService {
 
     @Transactional
     public CollectionDTO createCollection(CollectionDTO collectionDTO) {
+        // Find category if categoryId is provided
+        Category category = null;
+        if (collectionDTO.getCategoryId() != null && !collectionDTO.getCategoryId().isEmpty()) {
+            category = categoryRepository.findById(collectionDTO.getCategoryId())
+                    .orElse(null);
+        }
+
         Collection collection = Collection.builder()
                 .name(collectionDTO.getName())
                 .description(collectionDTO.getDescription())
                 .season(collectionDTO.getSeason())
                 .year(collectionDTO.getYear())
                 .coverImage(collectionDTO.getCoverImage())
+                .category(category)
                 .isVisible(collectionDTO.getIsVisible() != null ? collectionDTO.getIsVisible() : true)
                 .build();
 
@@ -69,6 +80,16 @@ public class CollectionService {
         collection.setSeason(collectionDTO.getSeason());
         collection.setYear(collectionDTO.getYear());
         collection.setCoverImage(collectionDTO.getCoverImage());
+
+        // Update category if provided
+        if (collectionDTO.getCategoryId() != null && !collectionDTO.getCategoryId().isEmpty()) {
+            Category category = categoryRepository.findById(collectionDTO.getCategoryId())
+                    .orElse(null);
+            collection.setCategory(category);
+        } else if (collectionDTO.getCategoryId() != null && collectionDTO.getCategoryId().isEmpty()) {
+            // Clear category if empty string is provided
+            collection.setCategory(null);
+        }
 
         if (collectionDTO.getIsVisible() != null) {
             collection.setIsVisible(collectionDTO.getIsVisible());
@@ -103,12 +124,21 @@ public class CollectionService {
                 .season(collection.getSeason())
                 .year(collection.getYear())
                 .coverImage(collection.getCoverImage())
+                .categoryId(collection.getCategory() != null ? collection.getCategory().getId() : null)
+                .category(collection.getCategory() != null ? toCategoryDTO(collection.getCategory()) : null)
                 .isVisible(collection.getIsVisible())
                 .createdAt(collection.getCreatedAt())
                 .updatedAt(collection.getUpdatedAt())
                 .pieces(pieces.stream()
                         .map(this::toCollectionPieceDTO)
                         .collect(Collectors.toList()))
+                .build();
+    }
+
+    private com.maamefashion.dto.CategoryDTO toCategoryDTO(Category category) {
+        return com.maamefashion.dto.CategoryDTO.builder()
+                .id(category.getId())
+                .name(category.getName())
                 .build();
     }
 
@@ -153,6 +183,7 @@ public class CollectionService {
                 .description(piece.getDescription())
                 .image(piece.getImage())
                 .price(piece.getPrice())
+                .showPrice(piece.getShowPrice())
                 .available(piece.getAvailable())
                 .category(piece.getCategory())
                 .build();

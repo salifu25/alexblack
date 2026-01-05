@@ -43,7 +43,8 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**", "/public/**", "/uploads/**").permitAll()
+                        .requestMatchers("/auth/**", "/public/**", "/uploads/**","/api/health", "/error",
+                                "/bookings/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .sessionManagement(session -> session
@@ -59,8 +60,10 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        // Use allowedOriginPatterns instead of allowedOrigins
-        configuration.setAllowedOriginPatterns(List.of("*")); // Allows all origins
+        configuration.setAllowedOrigins(Arrays.asList(
+                "https://alexblack.store",
+                "https://www.alexblack.store"
+        ));
 
         configuration.setAllowedMethods(Arrays.asList(
                 "GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"

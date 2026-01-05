@@ -17,13 +17,21 @@ public class UploadController {
     private final FileStorageService fileStorageService;
 
     @PostMapping("/images")
-    public ResponseEntity<Map<String, String>> uploadImage(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> uploadImage(
+            @RequestParam("file") MultipartFile file,
+            @RequestHeader(value = "Authorization", required = false) String authHeader) {
+
+        // Optional: Validate JWT token if present
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            // Add token validation logic if needed
+        }
+
         try {
             String fileUrl = fileStorageService.storeFile(file);
             return ResponseEntity.ok(Map.of("url", fileUrl));
         } catch (IOException e) {
             return ResponseEntity.internalServerError()
-                    .body(Map.of("error", "Failed to upload file"));
+                    .body(Map.of("error", "Failed to upload file: " + e.getMessage()));
         }
     }
 

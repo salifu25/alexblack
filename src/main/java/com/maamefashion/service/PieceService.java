@@ -39,6 +39,9 @@ public class PieceService {
         Collection collection = collectionRepository.findById(pieceDTO.getCollectionId())
                 .orElseThrow(() -> new RuntimeException("Collection not found"));
 
+        // Get the category from the collection, NOT from the pieceDTO
+        CollectionPiece.Category category = getCategoryFromCollection(collection);
+
         CollectionPiece piece = CollectionPiece.builder()
                 .collection(collection)
                 .name(pieceDTO.getName())
@@ -48,7 +51,7 @@ public class PieceService {
                 .showPrice(pieceDTO.getShowPrice() != null ? pieceDTO.getShowPrice() : false)
                 .available(pieceDTO.getAvailable() != null ? pieceDTO.getAvailable() : true)
                 .isVisible(pieceDTO.getIsVisible() != null ? pieceDTO.getIsVisible() : true)
-                .category(pieceDTO.getCategory())
+                .category(category)  // Use category from collection
                 .build();
 
         piece = pieceRepository.save(piece);
@@ -77,9 +80,8 @@ public class PieceService {
             piece.setIsVisible(pieceDTO.getIsVisible());
         }
 
-        if (pieceDTO.getCategory() != null) {
-            piece.setCategory(pieceDTO.getCategory());
-        }
+        // DO NOT update category from pieceDTO - it should always come from collection
+        // Category is inherited from parent collection
 
         piece = pieceRepository.save(piece);
         return toDTO(piece);
@@ -112,6 +114,26 @@ public class PieceService {
         piece.setAvailable(available);
         piece = pieceRepository.save(piece);
         return toDTO(piece);
+    }
+
+    /**
+     * Extract category from collection's category name
+     */
+    private CollectionPiece.Category getCategoryFromCollection(Collection collection) {
+        if (collection.getCategory() == null || collection.getCategory().getName() == null) {
+            // Default category if collection doesn't have one
+            return CollectionPiece.Category.READY_TO_WEAR;
+        }
+
+        String categoryName = collection.getCategory().getName();
+
+        // Map collection category name to piece category enum
+        return switch (categoryName.toLowerCase()) {
+            case "couture" -> CollectionPiece.Category.COUTURE;
+            case "ready-to-wear", "ready to wear" -> CollectionPiece.Category.READY_TO_WEAR;
+            case "accessories" -> CollectionPiece.Category.ACCESSORIES;
+            default -> CollectionPiece.Category.READY_TO_WEAR; // Default
+        };
     }
 
     private CollectionPieceDTO toDTO(CollectionPiece piece) {
